@@ -64,8 +64,13 @@ async function authenticate(req, res, next) {
 }
 
 // Gate protected routes — redirect to login if not authenticated
+// For /api/ routes (AJAX/fetch), return JSON 401 instead of an HTML redirect
 function requireAuth(req, res, next) {
   if (!req.user) {
+    console.warn(`[Auth] requireAuth blocked: ${req.method} ${req.originalUrl} (no valid session)`);
+    if (req.originalUrl.startsWith('/api/')) {
+      return res.status(401).json({ success: false, error: 'Session expired. Please reload and log in again.' });
+    }
     req.flash('error', 'Please log in to continue.');
     return res.redirect('/login');
   }

@@ -10,6 +10,14 @@ const sessionModel = require('./models/sessionModel');
 const PORT = process.env.PORT || 3000;
 
 async function start() {
+  // Warn about missing required API keys
+  const requiredKeys = ['GNEWS_API_KEY', 'OPENROUTER_API_KEY', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET'];
+  const missingKeys = requiredKeys.filter(k => !process.env[k]);
+  if (missingKeys.length > 0) {
+    console.warn('[Server] WARNING: Missing environment variables:', missingKeys.join(', '));
+    console.warn('[Server] News fetching and/or auth may not work. Check your .env file.');
+  }
+
   // Verify DB connection
   try {
     await db.query('SELECT 1');

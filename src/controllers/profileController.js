@@ -12,12 +12,13 @@ async function showProfile(req, res) {
 }
 
 async function updateProfile(req, res) {
-  const { display_name, language, categories, email_digest } = req.body;
+  const { display_name, languages, categories, email_digest } = req.body;
 
   try {
     await userModel.updateDisplayName(req.user.id, display_name);
+    const langArray = Array.isArray(languages) ? languages : (languages ? [languages] : ['en']);
     await preferenceModel.upsert(req.user.id, {
-      language: language || 'en',
+      languages: langArray.length > 0 ? langArray : ['en'],
       categories: Array.isArray(categories) ? categories : (categories ? [categories] : []),
       emailDigest: email_digest === true || email_digest === 'true' || email_digest === 'on'
     });

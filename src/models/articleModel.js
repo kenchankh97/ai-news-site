@@ -61,7 +61,7 @@ async function getForFeed({ categories = null, limit = 30, offset = 0 } = {}) {
   }
 
   const { rows } = await db.query(
-    `SELECT id, title_en, title_zh_tw, title_zh_cn,
+    `SELECT id, gnews_url, title_en, title_zh_tw, title_zh_cn,
             summary_en, summary_zh_tw, summary_zh_cn,
             source_name, source_url, image_url,
             category, published_at, fetched_at

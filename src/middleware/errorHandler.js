@@ -14,6 +14,7 @@ function errorHandler(err, req, res, next) {
 
   // CSRF token errors (csrf-csrf: INVALID_CSRF_TOKEN)
   if (err.code === 'EBADCSRFTOKEN' || err.code === 'INVALID_CSRF_TOKEN') {
+    console.warn(`[CSRF] Validation failed: ${req.method} ${req.originalUrl}  header=${req.headers['csrf-token'] || 'none'}  body._csrf=${req.body?._csrf || 'none'}`);
     if (req.accepts('json')) {
       return res.status(403).json({ success: false, error: 'Invalid CSRF token.' });
     }

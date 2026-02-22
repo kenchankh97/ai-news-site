@@ -15,20 +15,27 @@ router.get('/', async (req, res) => {
     userPrefs = await preferenceModel.findByUserId(req.user.id).catch(() => null);
   }
 
-  // Query params with fallback to user prefs
-  const lang = LANGUAGE_CODES.includes(req.query.lang)
-    ? req.query.lang
-    : (userPrefs ? userPrefs.language : 'en');
+  // Query params with fallback to user's first preferred language
+  const defaultLang = userPrefs
+    ? (Array.isArray(userPrefs.languages) && userPrefs.languages[0]) || userPrefs.language || 'en'
+    : 'en';
+  const lang = LANGUAGE_CODES.includes(req.query.lang) ? req.query.lang : defaultLang;
 
   const activeCategory = req.query.category || 'all';
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  // Category filter
-  const categoryFilter = activeCategory === 'all' ? null :
-    (userPrefs && req.query.category === undefined
-      ? userPrefs.categories
-      : [activeCategory].filter(c => ['ai-business', 'ai-technology', 'ai-ethics', 'ai-research'].includes(c)));
+  // Category filter:
+  // - Specific tab selected → filter to that one category
+  // - "All" tab for logged-in user with <4 categories → apply their preferences
+  // - "All" tab with no preferences or all 4 selected → no filter (show everything)
+  const validCats = ['ai-business', 'ai-technology', 'ai-ethics', 'ai-research'];
+  let categoryFilter = null;
+  if (activeCategory !== 'all' && validCats.includes(activeCategory)) {
+    categoryFilter = [activeCategory];
+  } else if (userPrefs?.categories && userPrefs.categories.length < 4) {
+    categoryFilter = userPrefs.categories;
+  }
 
   const [articles, total] = await Promise.all([
     articleModel.getForFeed({ categories: categoryFilter, limit: PAGE_SIZE, offset }),
@@ -37,13 +44,18 @@ router.get('/', async (req, res) => {
 
   const hasMore = offset + articles.length < total;
 
+  // Only show tabs for categories the user has selected (guests see all 4)
+  const visibleCategories = (userPrefs?.categories?.length > 0 && userPrefs.categories.length < 4)
+    ? CATEGORIES.filter(cat => userPrefs.categories.includes(cat.slug))
+    : CATEGORIES;
+
   res.render('pages/home', {
     pageTitle: 'AI News Feed',
     pageDescription: 'Latest AI news, summarized and translated — updated twice daily.',
     articles,
     lang,
     activeCategory,
-    categories: CATEGORIES,
+    categories: visibleCategories,
     page,
     hasMore
   });

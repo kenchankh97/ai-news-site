@@ -57,18 +57,22 @@ function showToast(message, type = 'info') {
 }
 
 // ---- Manual News Refresh ----
-async function triggerRefresh() {
-  const btn = document.getElementById('refreshBtn');
+async function triggerRefresh(clickedBtn) {
+  console.log('[Debug] triggerRefresh called');
+  const btn   = clickedBtn || document.getElementById('refreshBtn');
   const label = document.getElementById('refreshLabel');
-  const icon = document.getElementById('refreshIcon');
-  if (!btn) return;
+  const icon  = document.getElementById('refreshIcon');
 
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  const csrfMeta  = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = csrfMeta?.content;
+  console.log('[Debug] csrf meta:', csrfMeta ? 'found' : 'MISSING', '| token length:', csrfToken?.length ?? 0);
+
   if (!csrfToken) {
     showToast('Session expired. Please reload the page.', 'error');
     return;
   }
 
+  console.log('[Debug] Sending POST /api/news/refresh ...');
   // Disable button and show spinner
   btn.disabled = true;
   if (label) label.textContent = 'Fetching...';
@@ -90,6 +94,8 @@ async function triggerRefresh() {
 
     if (res.status === 429) {
       showToast('Please wait before refreshing again.', 'warning');
+    } else if (res.status === 401) {
+      showToast('Session expired. Please reload the page and log in again.', 'warning');
     } else if (data.success) {
       if (data.articlesAdded > 0) {
         showToast(`${data.message} Reloading...`, 'success');
@@ -99,7 +105,7 @@ async function triggerRefresh() {
         showToast(data.message, 'info');
       }
     } else {
-      showToast(data.message || 'Refresh failed.', 'error');
+      showToast(data.error || data.message || 'Refresh failed.', 'error');
     }
   } catch (err) {
     showToast('Network error. Please try again.', 'error');
@@ -112,6 +118,20 @@ async function triggerRefresh() {
     if (icon) icon.classList.remove('animate-spin');
   }
 }
+
+// ---- Bind refresh button event listeners ----
+// (cannot use onclick= attributes due to CSP script-src-attr restrictions)
+(function () {
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function () { triggerRefresh(refreshBtn); });
+  }
+
+  const emptyStateBtn = document.getElementById('emptyStateRefreshBtn');
+  if (emptyStateBtn) {
+    emptyStateBtn.addEventListener('click', function () { triggerRefresh(emptyStateBtn); });
+  }
+})();
 
 // ---- Auto-dismiss flash messages ----
 (function () {

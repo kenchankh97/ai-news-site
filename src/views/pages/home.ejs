@@ -34,7 +34,6 @@
       <% if (user) { %>
       <button
         id="refreshBtn"
-        onclick="triggerRefresh()"
         class="btn-primary py-1.5 px-3 text-sm"
         title="Manually refresh news (limited to once per 30 minutes)"
       >
@@ -87,7 +86,7 @@
       </p>
     </div>
     <% if (user) { %>
-    <button onclick="triggerRefresh()" class="btn-primary mt-4">
+    <button id="emptyStateRefreshBtn" class="btn-primary mt-4">
       Fetch news now
     </button>
     <% } %>

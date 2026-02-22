@@ -1,22 +1,35 @@
 'use strict';
 
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Brevo SMTP transport
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_PASS
-  }
-});
+// Brevo Transactional Email API (HTTPS/port 443 — no SMTP port issues)
+// API key: Brevo dashboard → Settings → API Keys → Generate new key
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-const FROM = `"${process.env.EMAIL_FROM_NAME || 'Your AI News'}" <${process.env.EMAIL_FROM || 'noreply@example.com'}>`;
+const SENDER = {
+  name:  process.env.EMAIL_FROM_NAME || 'Your AI News',
+  email: process.env.EMAIL_FROM      || 'noreply@example.com'
+};
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+
+// Core send function — replaces nodemailer transporter.sendMail()
+async function sendEmail({ to, toName, subject, html }) {
+  const response = await axios.post(BREVO_API_URL, {
+    sender:      SENDER,
+    to:          [{ email: to, name: toName || to }],
+    subject,
+    htmlContent: html
+  }, {
+    headers: {
+      'api-key':      process.env.BREVO_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    timeout: 15000
+  });
+  return response.data;
+}
 
 // Load and cache email templates
 const templateCache = {};
@@ -43,16 +56,16 @@ function sleep(ms) {
 // ---- Transactional emails ----
 
 async function sendVerificationEmail(user, verifyToken) {
-  const verifyUrl = `${APP_URL}/verify-email?token=${verifyToken}`;
+  const verifyUrl = `${APP_URL}/verify-email?token=${verifyToken}&uid=${user.id}`;
   const html = renderTemplate('verify', {
     DISPLAY_NAME: user.display_name || user.email,
-    VERIFY_URL: verifyUrl,
+    VERIFY_URL:   verifyUrl,
     APP_URL
   });
 
-  await transporter.sendMail({
-    from: FROM,
-    to: user.email,
+  await sendEmail({
+    to:      user.email,
+    toName:  user.display_name || user.email,
     subject: 'Verify your Your AI News account',
     html
   });
@@ -62,13 +75,13 @@ async function sendPasswordResetEmail(user, resetToken) {
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
   const html = renderTemplate('resetPassword', {
     DISPLAY_NAME: user.display_name || user.email,
-    RESET_URL: resetUrl,
+    RESET_URL:    resetUrl,
     APP_URL
   });
 
-  await transporter.sendMail({
-    from: FROM,
-    to: user.email,
+  await sendEmail({
+    to:      user.email,
+    toName:  user.display_name || user.email,
     subject: 'Reset your Your AI News password',
     html
   });
@@ -77,10 +90,10 @@ async function sendPasswordResetEmail(user, resetToken) {
 // ---- Digest email ----
 
 const CATEGORY_LABELS = {
-  'ai-business':   { en: 'AI Business',    zhTw: 'AI 商業',  zhCn: 'AI 商业'  },
-  'ai-technology': { en: 'AI Technology',  zhTw: 'AI 科技',  zhCn: 'AI 科技'  },
-  'ai-ethics':     { en: 'AI Ethics',      zhTw: 'AI 倫理',  zhCn: 'AI 伦理'  },
-  'ai-research':   { en: 'AI Research',    zhTw: 'AI 研究',  zhCn: 'AI 研究'  }
+  'ai-business':   { en: 'AI Business',   zhTw: 'AI 商業', zhCn: 'AI 商业' },
+  'ai-technology': { en: 'AI Technology', zhTw: 'AI 科技', zhCn: 'AI 科技' },
+  'ai-ethics':     { en: 'AI Ethics',     zhTw: 'AI 倫理', zhCn: 'AI 伦理' },
+  'ai-research':   { en: 'AI Research',   zhTw: 'AI 研究', zhCn: 'AI 研究' }
 };
 
 function getCategoryLabel(slug, lang) {
@@ -102,6 +115,15 @@ function getSummary(article, lang) {
   return article.summary_en || '';
 }
 
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function buildCategorySections(articles, subscriberCategories, lang) {
   const byCategory = {};
   for (const cat of subscriberCategories) {
@@ -114,17 +136,17 @@ function buildCategorySections(articles, subscriberCategories, lang) {
     const catLabel = getCategoryLabel(cat, lang);
     let articlesHtml = '';
     for (const art of catArticles.slice(0, 5)) {
-      const title = getTitle(art, lang);
+      const title   = getTitle(art, lang);
       const summary = getSummary(art, lang);
-      const source = art.source_name || '';
-      const url = art.source_url || art.gnews_url || '#';
+      const source  = art.source_name || '';
+      const url     = art.gnews_url || art.source_url || '#';
       articlesHtml += `
         <div style="background:#1e293b;border-radius:8px;padding:16px;margin-bottom:12px;">
           <div style="font-size:15px;font-weight:600;color:#f1f5f9;line-height:1.4;margin-bottom:8px;">
             <a href="${url}" style="color:#f1f5f9;text-decoration:none;">${escHtml(title)}</a>
           </div>
           ${summary ? `<div style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:10px;">${escHtml(summary)}</div>` : ''}
-          ${source ? `<div style="font-size:11px;color:#64748b;">${escHtml(source)}</div>` : ''}
+          ${source  ? `<div style="font-size:11px;color:#64748b;">${escHtml(source)}</div>` : ''}
           <a href="${url}" style="display:inline-block;margin-top:8px;color:#6366f1;font-size:12px;text-decoration:none;">Read full article →</a>
         </div>`;
     }
@@ -140,45 +162,55 @@ function buildCategorySections(articles, subscriberCategories, lang) {
   return html;
 }
 
-function escHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 async function sendPersonalizedDigest(subscriber, articles, batchId) {
-  const lang = subscriber.language || 'en';
-  const cats = subscriber.categories || ['ai-business', 'ai-technology', 'ai-ethics', 'ai-research'];
+  // Support both new `languages` array and legacy `language` string
+  const langs = subscriber.languages || (subscriber.language ? [subscriber.language] : ['en']);
+  const cats  = subscriber.categories || ['ai-business', 'ai-technology', 'ai-ethics', 'ai-research'];
 
   // Build batch metadata
   const [datePart, hourPart] = [batchId.slice(0, 10), batchId.slice(11)];
-  const hour = parseInt(hourPart);
+  const hour    = parseInt(hourPart);
   const edition = hour < 12 ? 'Morning' : 'Evening';
   const dateStr = new Date(datePart + 'T00:00:00+08:00')
     .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  const categorySections = buildCategorySections(articles, cats, lang);
-  if (!categorySections.trim()) return; // Nothing to send
+  // Build sections for each selected language, with dividers when multiple
+  let allSections = '';
+  for (const lang of langs) {
+    const sections = buildCategorySections(articles, cats, lang);
+    if (!sections.trim()) continue;
+    if (langs.length > 1) {
+      const langLabel = lang === 'zh-TW' ? '繁體中文' : lang === 'zh-CN' ? '简体中文' : 'English';
+      allSections += `
+        <div style="border-top:1px solid #1e293b;margin:24px 0 8px;padding-top:16px;">
+          <span style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#475569;">
+            ${escHtml(langLabel)}
+          </span>
+        </div>
+        ${sections}`;
+    } else {
+      allSections += sections;
+    }
+  }
+  if (!allSections.trim()) return; // Nothing to send
 
   const html = renderTemplate('digest', {
-    DISPLAY_NAME: subscriber.display_name || subscriber.email,
-    EDITION: edition,
-    DATE_FORMATTED: dateStr,
-    CATEGORY_SECTIONS: categorySections,
+    DISPLAY_NAME:      subscriber.display_name || subscriber.email,
+    EDITION:           edition,
+    DATE_FORMATTED:    dateStr,
+    CATEGORY_SECTIONS: allSections,
     APP_URL,
-    UNSUB_TOKEN: '' // users manage via profile page
+    UNSUB_TOKEN:       '' // users manage via profile page
   });
 
-  const subject = lang === 'zh-TW'
+  const primaryLang = langs[0] || 'en';
+  const subject = primaryLang === 'zh-TW'
     ? `您的 AI 新聞 — ${edition === 'Morning' ? '早間' : '晚間'}版 ${dateStr}`
-    : lang === 'zh-CN'
+    : primaryLang === 'zh-CN'
     ? `您的 AI 新闻 — ${edition === 'Morning' ? '早间' : '晚间'}版 ${dateStr}`
     : `Your AI News — ${edition} Edition, ${dateStr}`;
 
-  await transporter.sendMail({ from: FROM, to: subscriber.email, subject, html });
+  await sendEmail({ to: subscriber.email, toName: subscriber.display_name, subject, html });
 }
 
 async function sendDigestToAllSubscribers(batchId, articles) {
@@ -187,7 +219,6 @@ async function sendDigestToAllSubscribers(batchId, articles) {
 
   if (!subscribers.length) return;
 
-  // Send in batches of 50 to avoid SMTP rate limits
   for (let i = 0; i < subscribers.length; i += 50) {
     const chunk = subscribers.slice(i, i + 50);
     await Promise.all(

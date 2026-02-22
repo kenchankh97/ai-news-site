@@ -20,7 +20,7 @@
 
   const pubDate = article.published_at || article.fetched_at;
   const dateStr = pubDate ? new Date(pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-  const articleUrl = article.source_url || article.gnews_url || '#';
+  const articleUrl = article.gnews_url || article.source_url || '#';
 %>
 
 <article class="card-hover flex flex-col group">

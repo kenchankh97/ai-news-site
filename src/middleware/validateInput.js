@@ -92,16 +92,23 @@ const validateProfileUpdate = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Display name must be 2–100 characters.')
     .customSanitizer(val => xss(val)),
-  body('language')
-    .isIn(['en', 'zh-TW', 'zh-CN'])
-    .withMessage('Invalid language selection.'),
+  body('languages')
+    .customSanitizer(val => {
+      const valid = ['en', 'zh-TW', 'zh-CN'];
+      if (!val) return ['en'];
+      const arr = Array.isArray(val) ? val : [val];
+      const filtered = arr.filter(l => valid.includes(l));
+      return filtered.length > 0 ? filtered : ['en'];
+    }),
   body('categories')
     .customSanitizer(val => {
       const valid = ['ai-business', 'ai-technology', 'ai-ethics', 'ai-research'];
       if (!val) return [];
       const arr = Array.isArray(val) ? val : [val];
       return arr.filter(c => valid.includes(c));
-    }),
+    })
+    .isArray({ min: 1 })
+    .withMessage('Please select at least one news category.'),
   body('email_digest').customSanitizer(val => val === 'true' || val === true || val === '1' || val === 'on'),
   handleValidationErrors
 ];

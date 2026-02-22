@@ -21,6 +21,7 @@ router.post('/register', authLimiter, validateRegister, authController.register)
 
 // Email verification
 router.get('/verify-email', authController.verifyEmail);
+router.post('/verify-email', authController.confirmVerifyEmail);
 
 // Password setup (after verification)
 router.get('/setup-password', (req, res) => {
@@ -39,6 +40,13 @@ router.post('/login', authLimiter, validateLogin, authController.login);
 
 // Logout
 router.post('/logout', authController.logout);
+
+// Resend verification email
+router.get('/resend-verification', (req, res) => {
+  const email = req.query.email || '';
+  res.render('pages/resend-verification', { pageTitle: 'Resend Verification Email', prefillEmail: email });
+});
+router.post('/resend-verification', passwordResetLimiter, authController.resendVerification);
 
 // Forgot password
 router.get('/forgot-password', (req, res) => {

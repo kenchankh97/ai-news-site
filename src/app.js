@@ -49,7 +49,7 @@ app.use(cookieParser(process.env.SESSION_SECRET));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'changeme',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Must be true so session ID is stable for CSRF HMAC validation
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
@@ -75,6 +75,16 @@ app.set('layout', 'layouts/main');
 app.set('layout extractScripts', true);
 app.set('layout extractStyles', true);
 
+// ---- Request logger (dev only) ----
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    if (req.method !== 'GET') {
+      console.log(`[Request] ${req.method} ${req.originalUrl}  csrf-header=${req.headers['csrf-token'] || 'none'}  cookies=${Object.keys(req.cookies || {}).join(',') || 'none'}`);
+    }
+    next();
+  });
+}
+
 // ---- Health check (before CSRF — no token needed) ----
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
@@ -83,17 +93,19 @@ app.get('/health', (req, res) => {
 // ---- CSRF protection (Double Submit Cookie pattern) ----
 // csrf-csrf is a maintained, modern CSRF library for Express.
 // Token is read from req.body._csrf or the 'x-csrf-token' header.
-const { generateToken, doubleCsrfProtection } = doubleCsrf({
+const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => process.env.SESSION_SECRET || 'dev-secret',
-  cookieName: '__Host-psifi.x-csrf-token',
+  getSessionIdentifier: (req) => req.sessionID || req.session?.id || '',
+  cookieName: process.env.NODE_ENV === 'production' ? '__Host-psifi.x-csrf-token' : 'csrf-token',
   cookieOptions: {
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
-    httpOnly: true
+    httpOnly: true,
+    path: '/'
   },
   size: 64,
-  getTokenFromRequest: (req) =>
-    req.body?._csrf || req.headers['x-csrf-token'] || req.headers['csrf-token']
+  getCsrfTokenFromRequest: (req) =>
+    req.body?._csrf ?? req.headers['x-csrf-token'] ?? req.headers['csrf-token']
 });
 
 // Apply CSRF validation only to state-changing methods (POST, PUT, PATCH, DELETE)
@@ -109,7 +121,7 @@ app.use(authenticate);
 // ---- Global template locals ----
 app.use((req, res, next) => {
   res.locals.user         = req.user || null;
-  res.locals.csrfToken    = generateToken(req, res);
+  res.locals.csrfToken    = generateCsrfToken(req, res);
   res.locals.flashSuccess = req.flash('success');
   res.locals.flashError   = req.flash('error');
   res.locals.currentPath  = req.path;

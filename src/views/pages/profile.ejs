@@ -35,15 +35,15 @@
       </div>
     </div>
 
-    <!-- Display Language -->
+    <!-- News Languages (multi-select) -->
     <div class="card space-y-4">
       <h2 class="text-base font-semibold text-gray-200 flex items-center gap-2">
         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
         </svg>
-        News Language
+        News Languages
       </h2>
-      <p class="text-xs text-gray-600">Summaries are shown in your selected language. All articles are AI-translated.</p>
+      <p class="text-xs text-gray-600">Select one or more languages. Your email digest will include summaries in all selected languages.</p>
       <div class="grid grid-cols-3 gap-3">
         <%
           const langs = [
@@ -51,16 +51,17 @@
             { code: 'zh-TW', native: '繁體中文', sub: 'Traditional Chinese' },
             { code: 'zh-CN', native: '简体中文', sub: 'Simplified Chinese' }
           ];
+          const userLangs = prefs.languages || ['en'];
         %>
         <% langs.forEach(l => { %>
         <label class="cursor-pointer">
-          <input type="radio" name="language" value="<%= l.code %>"
-                 <%= prefs.language === l.code ? 'checked' : '' %>
+          <input type="checkbox" name="languages" value="<%= l.code %>"
+                 <%= userLangs.includes(l.code) ? 'checked' : '' %>
                  class="sr-only peer"/>
           <div class="text-center py-3 px-2 rounded-lg border border-gray-700
                       peer-checked:border-indigo-500 peer-checked:bg-indigo-900/30
                       hover:border-gray-600 transition-colors cursor-pointer">
-            <div class="text-sm font-semibold text-gray-200 peer-checked:text-indigo-300"><%= l.native %></div>
+            <div class="text-sm font-semibold text-gray-200"><%= l.native %></div>
             <div class="text-xs text-gray-600 mt-0.5"><%= l.sub %></div>
           </div>
         </label>

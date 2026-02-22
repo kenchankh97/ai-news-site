@@ -13,7 +13,11 @@
     </div>
     <div class="flex flex-col sm:flex-row gap-3 justify-center">
       <a href="/" class="btn-primary">Go to Home</a>
-      <button onclick="history.back()" class="btn-secondary">Go Back</button>
+      <button id="goBackBtn" class="btn-secondary">Go Back</button>
     </div>
   </div>
 </div>
+
+<script>
+  document.getElementById('goBackBtn').addEventListener('click', function () { history.back(); });
+</script>

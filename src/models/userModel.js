@@ -4,7 +4,7 @@ const db = require('../config/database');
 
 async function findById(id) {
   const { rows } = await db.query(
-    'SELECT id, email, display_name, is_verified, created_at FROM users WHERE id = $1',
+    'SELECT id, email, display_name, is_verified, password_hash, created_at FROM users WHERE id = $1',
     [id]
   );
   return rows[0] || null;
@@ -61,6 +61,13 @@ async function setPassword(userId, passwordHash) {
   return rows[0];
 }
 
+async function setVerifyToken(userId, verifyToken, verifyTokenExpires) {
+  await db.query(
+    'UPDATE users SET verify_token = $1, verify_token_expires = $2 WHERE id = $3',
+    [verifyToken, verifyTokenExpires, userId]
+  );
+}
+
 async function setResetToken(userId, resetToken, resetTokenExpires) {
   await db.query(
     'UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3',
@@ -84,5 +91,5 @@ async function updateDisplayName(userId, displayName) {
 
 module.exports = {
   findById, findByEmail, findByVerifyToken, findByResetToken,
-  create, verify, setPassword, setResetToken, resetPassword, updateDisplayName
+  create, verify, setPassword, setVerifyToken, setResetToken, resetPassword, updateDisplayName
 };

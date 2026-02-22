@@ -22,8 +22,12 @@ async function register(req, res) {
   try {
     const existing = await userModel.findByEmail(email);
     if (existing) {
-      req.flash('error', 'An account with this email already exists.');
-      return res.redirect('/register');
+      if (!existing.is_verified) {
+        // Account exists but email not verified — send them to resend page
+        return res.redirect(`/resend-verification?email=${encodeURIComponent(email)}`);
+      }
+      req.flash('error', 'An account with this email already exists. Please sign in.');
+      return res.redirect('/login');
     }
 
     const verifyToken = generateToken();
@@ -47,29 +51,72 @@ async function register(req, res) {
   }
 }
 
-// ---- Verify Email ----
+// ---- Verify Email (GET) — show confirmation page; does NOT verify yet ----
+// Email security scanners (Microsoft Defender, etc.) auto-follow GET links.
+// Actual verification only happens on the POST below (scanners don't POST forms).
 async function verifyEmail(req, res) {
-  const { token } = req.query;
+  const { token, uid } = req.query;
 
-  if (!token) {
+  if (!token && !uid) {
     req.flash('error', 'Invalid verification link.');
     return res.redirect('/register');
   }
 
   try {
-    const user = await userModel.findByVerifyToken(token);
-    if (!user) {
-      req.flash('error', 'This verification link is invalid or has expired. Please register again.');
-      return res.redirect('/register');
+    // Check if the token is still valid
+    const user = token ? await userModel.findByVerifyToken(token) : null;
+
+    if (user) {
+      // Token valid — show confirmation page; user must click a button to complete
+      return res.render('pages/verify-email-confirm', {
+        pageTitle: 'Confirm Your Email',
+        token,
+        uid: user.id
+      });
     }
 
-    // Mark user verified but keep token temporarily for password setup
-    await userModel.verify(user.id);
+    // Token expired/consumed (possibly by email scanner).
+    // If uid is known, check whether the account is already verified but has no password.
+    if (uid) {
+      const existing = await userModel.findByEmail(
+        (await userModel.findById(uid))?.email || ''
+      );
+      if (existing && existing.is_verified && !existing.password_hash) {
+        // Scanner verified the account — send user straight to set their password
+        req.flash('info', 'Your email was already verified. Please set your password to complete sign-up.');
+        return res.redirect(`/setup-password?uid=${uid}`);
+      }
+    }
 
-    // Redirect to password setup with token as one-time auth
-    res.redirect(`/setup-password?token=${token}&uid=${user.id}`);
+    req.flash('error', 'This verification link has expired or already been used. Please request a new one.');
+    return res.redirect('/resend-verification');
   } catch (err) {
     console.error('[Auth] Verify email error:', err);
+    req.flash('error', 'Verification failed. Please try again.');
+    res.redirect('/register');
+  }
+}
+
+// ---- Confirm Email (POST) — actual verification triggered by button click ----
+async function confirmVerifyEmail(req, res) {
+  const { token, uid } = req.body;
+
+  if (!token || !uid) {
+    req.flash('error', 'Invalid verification request.');
+    return res.redirect('/register');
+  }
+
+  try {
+    const user = await userModel.findByVerifyToken(token);
+    if (!user || user.id !== uid) {
+      req.flash('error', 'This verification link has expired. Please request a new one.');
+      return res.redirect('/resend-verification');
+    }
+
+    await userModel.verify(user.id);
+    res.redirect(`/setup-password?uid=${user.id}`);
+  } catch (err) {
+    console.error('[Auth] Confirm verify email error:', err);
     req.flash('error', 'Verification failed. Please try again.');
     res.redirect('/register');
   }
@@ -217,4 +264,28 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, verifyEmail, setupPassword, login, logout, forgotPassword, resetPassword };
+// ---- Resend Verification Email ----
+async function resendVerification(req, res) {
+  const { email } = req.body;
+  // Same safe response regardless of outcome — avoids email enumeration
+  const SAFE_MSG = 'If your account is pending verification, a new link has been sent. Please check your inbox.';
+
+  try {
+    const user = await userModel.findByEmail(email);
+    if (user && !user.is_verified) {
+      const verifyToken = generateToken();
+      const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      await userModel.setVerifyToken(user.id, verifyToken, verifyExpires);
+      await emailService.sendVerificationEmail(user, verifyToken).catch(err => {
+        console.error('[Auth] Resend verification email failed:', err.message);
+      });
+    }
+  } catch (err) {
+    console.error('[Auth] Resend verification error:', err);
+  }
+
+  req.flash('success', SAFE_MSG);
+  res.redirect('/login');
+}
+
+module.exports = { register, verifyEmail, confirmVerifyEmail, setupPassword, login, logout, forgotPassword, resetPassword, resendVerification };
