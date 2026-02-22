@@ -1,0 +1,159 @@
+<div class="max-w-2xl mx-auto space-y-6">
+  <!-- Header -->
+  <div>
+    <h1 class="text-2xl font-bold text-white">Profile Settings</h1>
+    <p class="text-gray-500 mt-1 text-sm">Customize your AI news experience.</p>
+  </div>
+
+  <%- include('../partials/flashMessages') %>
+
+  <form method="POST" action="/profile" class="space-y-5" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>"/>
+
+    <!-- Account Info -->
+    <div class="card space-y-4">
+      <h2 class="text-base font-semibold text-gray-200 flex items-center gap-2">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        Account
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="display_name" class="input-label">Display Name</label>
+          <input
+            type="text" id="display_name" name="display_name"
+            value="<%= user.display_name || '' %>"
+            required minlength="2" maxlength="100"
+            class="input-field"
+          />
+        </div>
+        <div>
+          <label class="input-label">Email</label>
+          <input type="email" value="<%= user.email %>" class="input-field" disabled/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Display Language -->
+    <div class="card space-y-4">
+      <h2 class="text-base font-semibold text-gray-200 flex items-center gap-2">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+        </svg>
+        News Language
+      </h2>
+      <p class="text-xs text-gray-600">Summaries are shown in your selected language. All articles are AI-translated.</p>
+      <div class="grid grid-cols-3 gap-3">
+        <%
+          const langs = [
+            { code: 'en',    native: 'English',  sub: 'Default' },
+            { code: 'zh-TW', native: '繁體中文', sub: 'Traditional Chinese' },
+            { code: 'zh-CN', native: '简体中文', sub: 'Simplified Chinese' }
+          ];
+        %>
+        <% langs.forEach(l => { %>
+        <label class="cursor-pointer">
+          <input type="radio" name="language" value="<%= l.code %>"
+                 <%= prefs.language === l.code ? 'checked' : '' %>
+                 class="sr-only peer"/>
+          <div class="text-center py-3 px-2 rounded-lg border border-gray-700
+                      peer-checked:border-indigo-500 peer-checked:bg-indigo-900/30
+                      hover:border-gray-600 transition-colors cursor-pointer">
+            <div class="text-sm font-semibold text-gray-200 peer-checked:text-indigo-300"><%= l.native %></div>
+            <div class="text-xs text-gray-600 mt-0.5"><%= l.sub %></div>
+          </div>
+        </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- News Categories -->
+    <div class="card space-y-4">
+      <h2 class="text-base font-semibold text-gray-200 flex items-center gap-2">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+        </svg>
+        News Categories
+      </h2>
+      <p class="text-xs text-gray-600">Choose which categories appear in your feed and email digest. At least one must be selected.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <%
+          const catDefs = [
+            { slug: 'ai-business',   label: 'AI Business',   sub: 'Funding, enterprise AI, market news', emoji: '💼' },
+            { slug: 'ai-technology', label: 'AI Technology', sub: 'Models, tools, product launches',     emoji: '⚡' },
+            { slug: 'ai-ethics',     label: 'AI Ethics',     sub: 'Safety, regulation, policy',          emoji: '⚖️' },
+            { slug: 'ai-research',   label: 'AI Research',   sub: 'Papers, benchmarks, discoveries',     emoji: '🔬' }
+          ];
+          const userCats = prefs.categories || ['ai-business','ai-technology','ai-ethics','ai-research'];
+        %>
+        <% catDefs.forEach(cat => { %>
+        <label class="cursor-pointer">
+          <input type="checkbox" name="categories" value="<%= cat.slug %>"
+                 <%= userCats.includes(cat.slug) ? 'checked' : '' %>
+                 class="sr-only peer"/>
+          <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-700
+                      peer-checked:border-indigo-500 peer-checked:bg-indigo-900/20
+                      hover:border-gray-600 transition-colors cursor-pointer">
+            <span class="text-xl flex-shrink-0 mt-0.5"><%= cat.emoji %></span>
+            <div>
+              <div class="text-sm font-medium text-gray-200"><%= cat.label %></div>
+              <div class="text-xs text-gray-600 mt-0.5"><%= cat.sub %></div>
+            </div>
+          </div>
+        </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Email Digest Toggle -->
+    <div class="card flex items-start sm:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-gray-200 flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          Email Digest
+        </h2>
+        <p class="text-sm text-gray-500 mt-1">Receive a personalized AI news digest at 08:00 and 18:00 HKT.</p>
+      </div>
+      <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+        <input type="checkbox" name="email_digest" value="on"
+               id="emailDigestToggle"
+               <%= prefs.email_digest ? 'checked' : '' %>
+               class="sr-only peer"/>
+        <div class="w-11 h-6 bg-gray-700 rounded-full peer
+                    peer-checked:after:translate-x-full peer-checked:bg-indigo-600
+                    after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                    after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all
+                    transition-colors duration-200">
+        </div>
+      </label>
+    </div>
+
+    <!-- Save button -->
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary flex-1 sm:flex-none">
+        Save Changes
+      </button>
+      <a href="/" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+
+  <!-- Security section -->
+  <div class="card space-y-3">
+    <h2 class="text-base font-semibold text-gray-200 flex items-center gap-2">
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+      Security
+    </h2>
+    <p class="text-sm text-gray-500">To change your password, use the password reset flow.</p>
+    <a href="/forgot-password" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1">
+      Change password
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </div>
+</div>

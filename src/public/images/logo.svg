@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 44" fill="none" role="img" aria-label="Your AI News">
+  <!-- Neural network nodes -->
+  <circle cx="12" cy="22" r="4.5" fill="#6366f1"/>
+  <circle cx="25" cy="13" r="4" fill="#8b5cf6"/>
+  <circle cx="25" cy="31" r="4" fill="#8b5cf6"/>
+  <circle cx="38" cy="22" r="5.5" fill="#a78bfa"/>
+  <!-- Connecting lines -->
+  <line x1="16.5" y1="22" x2="21" y2="13" stroke="#6366f1" stroke-width="1.5" opacity="0.65"/>
+  <line x1="16.5" y1="22" x2="21" y2="31" stroke="#6366f1" stroke-width="1.5" opacity="0.65"/>
+  <line x1="29" y1="13" x2="32.5" y2="22" stroke="#8b5cf6" stroke-width="1.5" opacity="0.65"/>
+  <line x1="29" y1="31" x2="32.5" y2="22" stroke="#8b5cf6" stroke-width="1.5" opacity="0.65"/>
+  <!-- "YOUR" small label -->
+  <text x="52" y="17" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#9ca3af" letter-spacing="2.5">YOUR</text>
+  <!-- "AI NEWS" main text -->
+  <text x="52" y="31" font-family="system-ui,-apple-system,sans-serif" font-size="15" font-weight="800" fill="#f9fafb" letter-spacing="0.5">AI NEWS</text>
+  <!-- Indigo accent underline under "AI" -->
+  <rect x="52" y="33.5" width="20" height="2.5" rx="1.25" fill="#6366f1"/>
+</svg>

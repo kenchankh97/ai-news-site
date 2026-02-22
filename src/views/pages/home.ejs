@@ -1,0 +1,127 @@
+<div class="space-y-8">
+  <!-- Page Header + Controls -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white">
+        <%= lang === 'zh-TW' ? 'AI 新聞動態' : lang === 'zh-CN' ? 'AI 新闻动态' : 'AI News Feed' %>
+      </h1>
+      <p class="text-gray-500 mt-1 text-sm">
+        <%= lang === 'zh-TW' ? '最新 AI 新聞，每日兩次更新（香港時間 08:00 及 18:00）'
+          : lang === 'zh-CN' ? '最新 AI 新闻，每日两次更新（香港时间 08:00 及 18:00）'
+          : 'Latest AI news — updated at 08:00 &amp; 18:00 HKT daily.' %>
+      </p>
+    </div>
+
+    <!-- Controls: Language + Refresh -->
+    <div class="flex items-center gap-3 flex-wrap">
+      <!-- Language switcher -->
+      <div class="flex rounded-lg border border-gray-700 overflow-hidden text-sm">
+        <a href="?lang=en&category=<%= activeCategory %>"
+           class="px-3 py-1.5 transition-colors <%= lang === 'en' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800' %>">
+          EN
+        </a>
+        <a href="?lang=zh-TW&category=<%= activeCategory %>"
+           class="px-3 py-1.5 border-l border-gray-700 transition-colors <%= lang === 'zh-TW' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800' %>">
+          繁中
+        </a>
+        <a href="?lang=zh-CN&category=<%= activeCategory %>"
+           class="px-3 py-1.5 border-l border-gray-700 transition-colors <%= lang === 'zh-CN' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800' %>">
+          简中
+        </a>
+      </div>
+
+      <!-- Manual Refresh (authenticated only) -->
+      <% if (user) { %>
+      <button
+        id="refreshBtn"
+        onclick="triggerRefresh()"
+        class="btn-primary py-1.5 px-3 text-sm"
+        title="Manually refresh news (limited to once per 30 minutes)"
+      >
+        <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span id="refreshLabel"><%= lang === 'zh-TW' ? '更新新聞' : lang === 'zh-CN' ? '更新新闻' : 'Refresh' %></span>
+      </button>
+      <% } else { %>
+      <a href="/login" class="btn-secondary py-1.5 px-3 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+        </svg>
+        Sign in to refresh
+      </a>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Category filter tabs -->
+  <div class="flex gap-2 flex-wrap">
+    <a href="?category=all&lang=<%= lang %>"
+       class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors
+              <%= activeCategory === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200' %>">
+      <%= lang === 'zh-TW' ? '全部' : lang === 'zh-CN' ? '全部' : 'All' %>
+    </a>
+    <% categories.forEach(cat => { %>
+    <a href="?category=<%= cat.slug %>&lang=<%= lang %>"
+       class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors
+              <%= activeCategory === cat.slug ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200' %>">
+      <%= lang === 'zh-TW' ? cat.labelZhTw : lang === 'zh-CN' ? cat.labelZhCn : cat.label %>
+    </a>
+    <% }) %>
+  </div>
+
+  <!-- Articles grid -->
+  <% if (articles.length === 0) { %>
+  <div class="text-center py-24 space-y-4">
+    <svg class="w-16 h-16 mx-auto text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6m-6 4h6"/>
+    </svg>
+    <div>
+      <p class="text-lg font-medium text-gray-400">
+        <%= lang === 'zh-TW' ? '暫無新聞' : lang === 'zh-CN' ? '暂无新闻' : 'No articles yet' %>
+      </p>
+      <p class="text-sm text-gray-600 mt-1">
+        <%= lang === 'zh-TW' ? '請在香港時間 08:00 或 18:00 後回來查看'
+          : lang === 'zh-CN' ? '请在香港时间 08:00 或 18:00 后回来查看'
+          : 'News is fetched at 08:00 & 18:00 HKT. Check back soon.' %>
+      </p>
+    </div>
+    <% if (user) { %>
+    <button onclick="triggerRefresh()" class="btn-primary mt-4">
+      Fetch news now
+    </button>
+    <% } %>
+  </div>
+  <% } else { %>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <% articles.forEach(article => { %>
+      <%- include('../partials/articleCard', { article, lang }) %>
+    <% }) %>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex items-center justify-between pt-4">
+    <% if (page > 1) { %>
+    <a href="?category=<%= activeCategory %>&lang=<%= lang %>&page=<%= page - 1 %>"
+       class="btn-secondary text-sm">
+      &larr; Previous
+    </a>
+    <% } else { %>
+    <div></div>
+    <% } %>
+
+    <% if (hasMore) { %>
+    <a href="?category=<%= activeCategory %>&lang=<%= lang %>&page=<%= page + 1 %>"
+       class="btn-secondary text-sm">
+      Next &rarr;
+    </a>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+
+<% if (user) { %>
+<script>
+  window._lang = '<%= lang %>';
+</script>
+<% } %>

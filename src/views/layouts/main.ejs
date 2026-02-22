@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="csrf-token" content="<%= csrfToken %>"/>
+  <title><%= typeof pageTitle !== 'undefined' ? pageTitle + ' | Your AI News' : 'Your AI News' %></title>
+  <meta name="description" content="<%= typeof pageDescription !== 'undefined' ? pageDescription : 'Your AI News — AI news summarized in English, Traditional Chinese & Simplified Chinese, updated twice daily.' %>"/>
+  <meta name="robots" content="index, follow"/>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Your AI News"/>
+  <meta property="og:description" content="Latest AI news, summarized and translated, delivered twice daily."/>
+  <meta property="og:type" content="website"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml"/>
+
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" href="/css/output.css"/>
+
+  <%- typeof style !== 'undefined' ? style : '' %>
+</head>
+<body class="min-h-screen flex flex-col bg-gray-950 text-gray-100 antialiased">
+
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 container mx-auto px-4 py-8 max-w-7xl w-full">
+    <%- include('../partials/flashMessages') %>
+    <%- body %>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-3 pointer-events-none"></div>
+
+  <script src="/js/main.js"></script>
+  <%- typeof script !== 'undefined' ? script : '' %>
+</body>
+</html>

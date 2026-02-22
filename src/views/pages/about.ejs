@@ -1,0 +1,102 @@
+<div class="max-w-2xl mx-auto space-y-8">
+  <!-- Hero -->
+  <div class="text-center py-8">
+    <div class="flex justify-center mb-6">
+      <svg width="64" height="64" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="22" r="4.5" fill="#6366f1"/>
+        <circle cx="24" cy="13" r="4" fill="#8b5cf6"/>
+        <circle cx="24" cy="31" r="4" fill="#8b5cf6"/>
+        <circle cx="37" cy="22" r="5.5" fill="#a78bfa"/>
+        <line x1="15.5" y1="22" x2="20" y2="13" stroke="#6366f1" stroke-width="1.5" opacity="0.65"/>
+        <line x1="15.5" y1="22" x2="20" y2="31" stroke="#6366f1" stroke-width="1.5" opacity="0.65"/>
+        <line x1="28" y1="13" x2="31.5" y2="22" stroke="#8b5cf6" stroke-width="1.5" opacity="0.65"/>
+        <line x1="28" y1="31" x2="31.5" y2="22" stroke="#8b5cf6" stroke-width="1.5" opacity="0.65"/>
+      </svg>
+    </div>
+    <h1 class="text-3xl font-bold text-white mb-3">About Your AI News</h1>
+    <p class="text-gray-400 text-lg leading-relaxed">
+      Your AI News is an automated AI news aggregator that fetches, summarizes, and translates
+      the latest artificial intelligence news — delivered twice daily.
+    </p>
+  </div>
+
+  <!-- How it works -->
+  <div class="card space-y-5">
+    <h2 class="text-lg font-semibold text-white">How It Works</h2>
+    <div class="space-y-4">
+      <% [
+        {
+          icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>`,
+          title: 'Twice-Daily Updates',
+          desc: 'News is automatically fetched at 08:00 and 18:00 Hong Kong Time every day — up to 30 of the latest AI articles per update.'
+        },
+        {
+          icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>`,
+          title: 'AI-Powered Summaries',
+          desc: 'Each article is processed by an advanced language model that categorizes it and generates concise 2–3 sentence summaries in English, Traditional Chinese, and Simplified Chinese.'
+        },
+        {
+          icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>`,
+          title: 'Personalized Email Digest',
+          desc: 'Registered users receive a personalized email after each update, filtered by their preferred categories and displayed in their chosen language.'
+        },
+        {
+          icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>`,
+          title: 'Personalized Settings',
+          desc: 'Choose your preferred display language and news categories in your profile. You can toggle categories on or off and enable or disable email digests.'
+        }
+      ].forEach(item => { %>
+      <div class="flex gap-4">
+        <div class="w-9 h-9 rounded-lg bg-indigo-900/50 border border-indigo-800 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <%- item.icon %>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-200 mb-1"><%= item.title %></h3>
+          <p class="text-sm text-gray-500 leading-relaxed"><%= item.desc %></p>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="card space-y-4">
+    <h2 class="text-lg font-semibold text-white">News Categories</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <% [
+        { emoji: '💼', label: 'AI Business',   desc: 'Funding, acquisitions, enterprise AI, market analysis' },
+        { emoji: '⚡', label: 'AI Technology', desc: 'Models, tools, frameworks, product launches' },
+        { emoji: '⚖️', label: 'AI Ethics',     desc: 'Safety, regulation, policy, societal impact' },
+        { emoji: '🔬', label: 'AI Research',   desc: 'Papers, benchmarks, scientific discoveries' }
+      ].forEach(cat => { %>
+      <div class="flex items-start gap-3 p-3 rounded-lg bg-gray-800/60 border border-gray-700">
+        <span class="text-xl"><%= cat.emoji %></span>
+        <div>
+          <div class="text-sm font-semibold text-gray-200"><%= cat.label %></div>
+          <div class="text-xs text-gray-500 mt-0.5"><%= cat.desc %></div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <% if (!user) { %>
+  <div class="card text-center space-y-4 bg-indigo-950/40 border-indigo-800/40">
+    <h2 class="text-lg font-semibold text-white">Stay informed about AI</h2>
+    <p class="text-gray-400 text-sm">Create a free account to receive personalized AI news digests twice daily.</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="/register" class="btn-primary">Create Free Account</a>
+      <a href="/login" class="btn-secondary">Sign In</a>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Footer note -->
+  <div class="text-center space-y-1 py-4 border-t border-gray-800">
+    <p class="text-sm text-gray-600">&copy; Ken Chan 2026. All rights reserved.</p>
+    <p class="text-sm text-gray-700">Powered by <span class="text-gray-500 font-medium">Antigravity</span></p>
+  </div>
+</div>

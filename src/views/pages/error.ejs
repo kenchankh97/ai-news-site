@@ -1,0 +1,19 @@
+<div class="auth-container">
+  <div class="auth-card text-center space-y-6">
+    <div class="text-7xl font-black text-gray-800"><%= statusCode %></div>
+    <div>
+      <h1 class="text-xl font-bold text-gray-200 mb-2"><%= message %></h1>
+      <p class="text-gray-500 text-sm">
+        <% if (statusCode === 404) { %>
+          The page you're looking for doesn't exist.
+        <% } else { %>
+          Something went wrong. Please try again later.
+        <% } %>
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="/" class="btn-primary">Go to Home</a>
+      <button onclick="history.back()" class="btn-secondary">Go Back</button>
+    </div>
+  </div>
+</div>

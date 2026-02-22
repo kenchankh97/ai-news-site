@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+.env.production
+src/public/css/output.css
+*.log
+logs/
+.DS_Store
+Thumbs.db
+.vscode/
+.claude/
+*.swp
+*.swo
